@@ -1,0 +1,15 @@
+                      Mixed Linear Model Regression Results
+=================================================================================
+Model:                MixedLM    Dependent Variable:    Q("Resp. Rate (% diff.)")
+No. Observations:     75         Method:                REML                     
+No. Groups:           5          Scale:                 179.9295                 
+Min. group size:      15         Log-Likelihood:        -307.8631                
+Max. group size:      15         Converged:             Yes                      
+Mean group size:      15.0                                                       
+---------------------------------------------------------------------------------
+                                       Coef.  Std.Err.   z    P>|z| [0.025 0.975]
+---------------------------------------------------------------------------------
+Intercept                              26.957   11.848  2.275 0.023  3.735 50.178
+Q("Fiber Position ($\mu$m from VII)")  -0.011    0.025 -0.430 0.667 -0.061  0.039
+eid Var                               271.297   17.605                           
+=================================================================================
