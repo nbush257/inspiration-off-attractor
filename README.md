@@ -4,7 +4,7 @@ Running name: VLAD (Ventilatory Latent Attractor Dynamics)
 
 ---
 ### Organization
-Code to analyse and make figures for Inspiratory off attractor manuscript in preparation.
+Code to analyze and make figures for Inspiratory off attractor manuscript in preparation.
 >[!NOTE] Subfolders of `VLAD` contain code to generate intermediate results, figures, and statistics. See those for details
 
 
