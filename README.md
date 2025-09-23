@@ -22,7 +22,8 @@ The `sessions_to_include.csv` file indicates which subject and session number to
 We record neural data multiple times from the same mouse, but in different brain locations. We do not double count the physiology of these animals as different n's, so we exclude those from consideration by setting "use_holds","use_reset", and "use_phasic" to True/False. In some cases, some, but not all stimulations were not executed properly during experiment. We exclude stimulations that were not enabled correctly. Specifically, some of the phasic stimulations (e.g., m2024-61) did not have a proper trigger set on the diaphargm signals.
 
  ### Processing (steps for augmenting the dataset with new recordings):
- > Note: These steps have been largely or entirely subsumed into newer versions of CIBRRIG (>=0.9.0).
+> [!NOTE]
+> These steps have been largely or entirely subsumed into newer versions of CIBRRIG (>=0.9.0).
  - Move data over from rss
  - Modify `sessions_to_use.csv` to incorporate new data and assign to analyses
  - Run `scripts/convertks2alf.py` to convert neural data to alf structure
