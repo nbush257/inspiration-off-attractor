@@ -26,7 +26,9 @@ _log = logging.getLogger(__name__)
 _log.setLevel(logging.INFO)
 
 if sys.platform == "win32":
-    CACHE_DIR = Path(r'C:\Users\nbush\local_working\VLAD\alf_data_repo')
+    # CACHE_DIR = Path(r'C:\Users\nbush\local_working\VLAD\alf_data_repo')
+    CACHE_DIR = Path(r'E:\alf_data_repo')
+    
 else:
     CACHE_DIR = Path("/data/hps/assoc/private/medullary/data/alf_data_repo")
 assert CACHE_DIR.exists(), f"{CACHE_DIR} Does not exist"

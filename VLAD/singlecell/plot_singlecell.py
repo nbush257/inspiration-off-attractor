@@ -61,6 +61,8 @@ CONDITION_TITLES = {
 }
 
 GENOTYPE_ORDER = ['vglut2ai32','vgatai32','vgatcre_ntschrmine']
+PHASE_ORDER = ['exp','insp','tonic']
+
 set_style()
 EXT = ".pdf"
 
@@ -599,7 +601,7 @@ def plot_scatters(mean_frs, conditions =None,fs=(3.25, 3.25), ext=EXT):
         p = (
             so.Plot(mean_frs, x="control", y=condition, color="category")
             .facet(col="category", row="genotype",order={"row": GENOTYPE_ORDER})
-            .add(so.Dot(pointsize=ps, edgewidth=0, alpha=0.3), legend=False)
+            .add(so.Dot(pointsize=ps, edgewidth=0, alpha=0.6), legend=False)
             .limit(x=[0, 2e2], y=[0, 2e2])
             .scale(
                 x=so.Continuous(trans="symlog").label(base=None),
@@ -617,6 +619,22 @@ def plot_scatters(mean_frs, conditions =None,fs=(3.25, 3.25), ext=EXT):
             ax.plot(x, half_line(x), color="gray", linestyle="--")
 
             category, gg = ax.get_title().split(" | ")
+                        
+            # Plot median
+            mask = (mean_frs.index.get_level_values('category') == category) & (mean_frs.index.get_level_values('genotype') == gg)
+            x_data = mean_frs.loc[mask, 'control']
+            y_data = mean_frs.loc[mask, condition]
+            
+            x_median = x_data.median()
+            y_median = y_data.median()
+            
+            # Plot centroid point
+            centroid_color = phase_map[category]
+            edge_color = 'white' if centroid_color == plt.rcParams["text.color"] else 'black'
+            ax.plot(x_median, y_median, 'o', markersize=3, markerfacecolor=centroid_color, 
+                   markeredgecolor=edge_color, markeredgewidth=0.5, zorder=10)
+            
+            
             ax.set_ylabel(f"{GENOTYPE_LABELS[gg]}", color=GENOTYPE_COLORS[gg])
             ax.set_xlabel("")
             if ii < 3:
@@ -918,8 +936,8 @@ def plot_hb_vs_hold_scatter(mean_frs, ext=EXT):
     phase_map["tonic"] = plt.rcParams["text.color"]
     p = (
         so.Plot(mean_frs, "hb", "hold", color="category")
-        .facet(col="category", row="genotype")
-        .add(so.Dot(pointsize=ps, edgewidth=0, alpha=0.3), legend=False)
+        .facet(col="category", row="genotype",order  = {"row": GENOTYPE_ORDER, "col": PHASE_ORDER})
+        .add(so.Dot(pointsize=ps, edgewidth=0, alpha=0.7), legend=False)
         .limit(x=[0, 151], y=[0, 151])
         .scale(
             x=so.Continuous(trans="sqrt").tick(at=[0,10,50,150]).label(),
@@ -932,6 +950,21 @@ def plot_hb_vs_hold_scatter(mean_frs, ext=EXT):
     for ii, ax in enumerate(p._figure.axes):
         title = ax.get_title()
         phase, gg = title.split(" | ")
+                
+        # Plot median
+        mask = (mean_frs.index.get_level_values('category') == phase) & (mean_frs.index.get_level_values('genotype') == gg)
+        x_data = mean_frs.loc[mask, 'hb']
+        y_data = mean_frs.loc[mask, 'hold']
+        
+        x_median = x_data.median()
+        y_median = y_data.median()
+
+        # Plot centroid point
+        centroid_color = phase_map[phase]
+        edge_color = 'white' if centroid_color == plt.rcParams["text.color"] else 'black'
+        ax.plot(x_median, y_median, 'o', markersize=3, markerfacecolor=centroid_color, 
+               markeredgecolor=edge_color, markeredgewidth=0.5, zorder=10)
+    
         if ii < 3:
             ax.set_title(phase.capitalize() + " units", color=phase_map[phase],size='small')
         else:
