@@ -22,7 +22,7 @@ set_style()
 ext = ".pdf"
 FIGSIZE = (2.5, 1.75)
 PS = 3
-STIM_MAP = {"50ms": "50ms", "hb": "HB", "random": "Random"}
+STIM_MAP = {"50ms": "Pulse", "hb": "HB","random": "Control"}
 ORDER = ['vglut2ai32','vgatai32','vgatcre_ntschrmine']
 STATS_DEST = Path('./stats')
 STATS_DEST.mkdir(exist_ok=True)
@@ -207,6 +207,8 @@ def plot_metrics_by_genotype_2d_25ms(rez, depvar):
     ylabel = "Distance to I-off" if depvar == "exp_distance" else "Dispersion"
 
     df = rez.query('ndims==2 & post_time==25 & condition!="hb"')
+    df = df.copy()
+    df['condition'] = df['condition'].map(STIM_MAP)
     p = (
         so.Plot(
             df,
@@ -227,7 +229,7 @@ def plot_metrics_by_genotype_2d_25ms(rez, depvar):
         )
         .scale(
             color=GENOTYPE_COLORS,
-            x=so.Nominal(order=["random", "50ms"]),
+            x=so.Nominal(order=["Control", "Pulse"]),
             alpha=[0.25, 1],
             y=so.Continuous().tick(count=3),
         )
@@ -458,10 +460,6 @@ def run_metric_stats(rez_full,ndims=2,post_time=25):
     for depvar in ["exp_distance", "dispersion"]:
         for genotype in genotypes:
             test_df = rez_full.query("ndims==@ndims and genotype==@genotype & post_time==@post_time")
-            # stats_rez = pg.wilcoxon(
-            #     test_df.query("condition=='50ms'")[depvar],
-            #     test_df.query("condition=='random'")[depvar],
-            # )
             stats_rez = pg.ttest(
                 test_df.query("condition=='50ms'")[depvar],
                 test_df.query("condition=='random'")[depvar],
@@ -470,8 +468,8 @@ def run_metric_stats(rez_full,ndims=2,post_time=25):
 
             stats_rez["genotype"] = genotype
             stats_rez["depvar"] = depvar
-            stats_rez["significant"] = stats_rez["p-val"] < 0.05
-            stats_rez["sig_string"] = stats_rez["p-val"].apply(sig2star)
+            stats_rez["significant"] = stats_rez["p_val"] < 0.05
+            stats_rez["sig_string"] = stats_rez["p_val"].apply(sig2star)
 
             stats_rez_full = pd.concat([stats_rez_full, stats_rez])
 
@@ -486,8 +484,8 @@ def run_HB_distance_stats(df_D):
     mdl = pg.mixed_anova(df, dv="distance", 
                          between='genotype',
                          within="comparison", subject="eid")
-    mdl["significant"] = mdl["p-unc"] < 0.05
-    mdl["sig_string"] = mdl["p-unc"].apply(sig2star)
+    mdl["significant"] = mdl["p_unc"] < 0.05
+    mdl["sig_string"] = mdl["p_unc"].apply(sig2star)
 
     fn = STATS_DEST.joinpath("anova_distance_to_hb.csv")
     mdl.to_csv(fn)
@@ -502,8 +500,8 @@ def run_HB_distance_stats(df_D):
         wilcoxon['A'] = '50ms'
         wilcoxon['B'] = 'random'
         wilcoxon["genotype"] = genotype
-        wilcoxon["significant"] = wilcoxon["p-val"] < 0.05
-        wilcoxon["sig_string"] = wilcoxon["p-val"].apply(sig2star)
+        wilcoxon["significant"] = wilcoxon["p_val"] < 0.05
+        wilcoxon["sig_string"] = wilcoxon["p_val"].apply(sig2star)
         wilcoxon_full = pd.concat([wilcoxon_full, wilcoxon])
     fn = STATS_DEST.joinpath("wilcoxon_distance_to_hb.csv")
     wilcoxon_full.to_csv(fn, index=False)
