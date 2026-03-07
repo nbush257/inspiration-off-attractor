@@ -511,17 +511,18 @@ def run_HB_distance_stats(df_D):
 # ========================
 # Run
 # ========================
-df_D, speed_rez, closest_phi, closest_phi_full, rez_full,hold_stim_pca = load_data()
-plot_metrics(rez_full, df_D)
-plot_phasic_stim_speeds(speed_rez)
-plot_closest_phi_to_stim(closest_phi_full)
+if __name__ == "__main__":
+    df_D, speed_rez, closest_phi, closest_phi_full, rez_full,hold_stim_pca = load_data()
+    plot_metrics(rez_full, df_D)
+    plot_phasic_stim_speeds(speed_rez)
+    plot_closest_phi_to_stim(closest_phi_full)
 
-run_metric_stats(rez_full)
-run_HB_distance_stats(df_D)
-plot_hold_stims_speeds()
+    run_metric_stats(rez_full)
+    run_HB_distance_stats(df_D)
+    plot_hold_stims_speeds()
 
 
 
-p = so.Plot(
-    hold_stim_pca,x=0,y=1,color='genotype'
-)
+    p = so.Plot(
+        hold_stim_pca,x=0,y=1,color='genotype'
+    )

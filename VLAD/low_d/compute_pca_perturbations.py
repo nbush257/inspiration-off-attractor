@@ -599,133 +599,6 @@ def get_intervals(rec):
     return intervals
 
 
-# ============== #
-# MAIN LOOP
-# ============== #
-rez = pd.DataFrame()
-speed_rez = pd.DataFrame()
-df_D = pd.DataFrame()
-closest_phi_DF = pd.DataFrame()
-
-rez_full_fn = Path(r'distance_results_full.csv')
-rez_fn = Path(r'distance_results.csv')
-median_distances_fn = Path(r'median_distances.csv')
-closest_phi_full_fn = Path(r'closest_phi_full.csv')
-closest_phi_fn = Path(r'closest_phi.csv')
-speed_fn = Path(r'speed_by_phase.csv')
-hold_stim_pca_fn = Path(r'hold_stim_pca.csv')
-hold_stim_speeds = Path(r'hold_stim_speeds.csv')
-
-def remove_files():
-    if closest_phi_full_fn.exists():
-        closest_phi_full_fn.unlink()
-    if rez_full_fn.exists():
-        rez_full_fn.unlink()
-    if median_distances_fn.exists():
-        median_distances_fn.unlink()
-    if closest_phi_fn.exists():
-        closest_phi_fn.unlink()
-    if speed_fn.exists():
-        speed_fn.unlink()
-    if rez_fn.exists():
-        rez_fn.unlink()
-    if hold_stim_pca_fn.exists():
-        hold_stim_pca_fn.unlink()
-    if hold_stim_speeds.exists():
-        hold_stim_speeds.unlink()
-remove_files()
-
-for eid in EIDS_NEURAL:
-    # Load and compute projections
-    rec = Rec(one, eid)
-    pop = Population(rec.spikes.times, rec.spikes.clusters, t0=300, tf=600)
-    pop.compute_projection()
-    pop.compute_projection_speed()
-    ndims_to_compute = range(2, 11)
-
-    df_hold_speed = compute_speed_by_phase_holds(rec,pop)
-    df_hold_speed.to_csv(hold_stim_speeds, mode="a", header=not hold_stim_speeds.exists(), index=False)
-
-    # Compute pairwise median distance between Hold, HB, and control stims
-    D,pos = compute_hb_comparisons(rec, pop, ndims_to_compute)
-    D.to_csv(median_distances_fn, mode="a", header=not median_distances_fn.exists(), index=False)
-    pos.to_csv(hold_stim_pca_fn, mode="a", header=not closest_phi_full_fn.exists(), index=False)
-
-    intervals = get_intervals(rec)
- 
-
-    # Compute dispersion, distance to attractor, and closest phase
-    conditions = ["50ms", "hb", "random"]
-    post_times = np.arange(0, 0.1, 0.005)
-    rez = pd.DataFrame()
-    closest_phi_DF = pd.DataFrame()
-    for condition,ndims,post_time in product(conditions, ndims_to_compute, post_times):
-        if condition=='hb':
-            post_time += 1
-        # Dispersion
-        post_stim, D = compute_post_stim_dispersion(
-            rec,
-            pop,
-            intervals[condition],
-            post_time=post_time,
-            ndims=ndims,
-            mode="trace",
-        )
-
-        # Distance to attractor
-        D_attractor = compute_distance_to_attractor(
-            rec, pop, post_stim, ndims=ndims, t0=500, tf=600
-        )
-        # Put the dispersion and distance to attractor in a dataframe
-        _rez = pd.DataFrame()
-        _rez["dispersion"] = [D]
-        _rez["condition"] = condition
-        _rez["exp_distance"] = [D_attractor]
-        _rez["genotype"] = rec.genotype
-        _rez["ndims"] = ndims
-        _rez["post_time"] = post_time
-        _rez["eid"] = rec.eid
-        _rez["subject"] = rec.subject
-        rez = pd.concat([rez, _rez])
-
-        # Closest phase
-        closest_phi, D_to_manifold = compute_nearest_phase(
-            rec, pop, post_stim[:, :ndims], ndims=ndims
-        )
-        # Put the closest phi points for all stims in a dataframe
-        _closest_phi_DF = pd.DataFrame()
-        _closest_phi_DF["closest_phi"] = closest_phi
-        _closest_phi_DF["genotype"] = rec.genotype
-        _closest_phi_DF["ndims"] = ndims
-        _closest_phi_DF["post_time"] = post_time
-        _closest_phi_DF["eid"] = rec.eid
-        _closest_phi_DF["subject"] = rec.subject
-        _closest_phi_DF["condition"] = condition
-        closest_phi_DF = pd.concat([closest_phi_DF, _closest_phi_DF])
-
-
-    rez.to_csv(rez_full_fn, mode="a", header=not rez_full_fn.exists(), index=False)
-    closest_phi_DF.to_csv(
-        closest_phi_full_fn, mode="a", header=not closest_phi_full_fn.exists(), index=False
-    )
-    speed = get_speed_by_phase(rec, pop)
-    speed.to_csv(speed_fn, mode="a", header=not speed_fn.exists())
-
-    # Garbage collection
-    del rec,pop,speed,closest_phi_DF,rez
-    gc.collect()
-
-rez_full = pd.read_csv(rez_full_fn)
-rez = rez_full.query("post_time == 0.025")
-rez.reset_index(drop=True, inplace=True)
-rez.to_csv("distance_results.csv", index=False)
-
-closest_phi_full = pd.read_csv(closest_phi_full_fn)
-closest_phi = closest_phi_full.query("post_time == 0.025")
-closest_phi.reset_index(drop=True, inplace=True)
-closest_phi.to_csv("closest_phi.csv", index=False)
-
-
 def plot_clearer_stim_example(eid,figsize=(2.5,2.5),lw=1,ms=2,ext="png",dpi=600):
     """ 
     Makes a step by step plot of the stimulation effect on LowD space
@@ -842,16 +715,144 @@ def plot_clearer_stim_example(eid,figsize=(2.5,2.5),lw=1,ms=2,ext="png",dpi=600)
     f.get_children()[2].set_xticklabels([f"{clim:.2f}" for clim in clims])
     plt.savefig(f"{fn}_f.{ext}",dpi=dpi)
 
-exts = ['pdf'] #  ['pdf','png']
-for ext in exts:
-    eid = one.search(subject="m2024-40", datasets="spikes.times.npy")[0]
-    plot_clearer_stim_example(eid,ext=ext)
 
-    eid = one.search(subject="m2024-34", datasets="spikes.times.npy")[0]
-    plot_clearer_stim_example(eid,ext=ext)
+def remove_files():
+    if closest_phi_full_fn.exists():
+        closest_phi_full_fn.unlink()
+    if rez_full_fn.exists():
+        rez_full_fn.unlink()
+    if median_distances_fn.exists():
+        median_distances_fn.unlink()
+    if closest_phi_fn.exists():
+        closest_phi_fn.unlink()
+    if speed_fn.exists():
+        speed_fn.unlink()
+    if rez_fn.exists():
+        rez_fn.unlink()
+    if hold_stim_pca_fn.exists():
+        hold_stim_pca_fn.unlink()
+    if hold_stim_speeds.exists():
+        hold_stim_speeds.unlink()
 
-    eid = one.search(subject="m2024-30", datasets="spikes.times.npy")[0]
-    plot_clearer_stim_example(eid,ext=ext)
+# ============== #
+# MAIN LOOP
+# ============== #
+if __name__ == "__main__":
+    rez = pd.DataFrame()
+    speed_rez = pd.DataFrame()
+    df_D = pd.DataFrame()
+    closest_phi_DF = pd.DataFrame()
 
-    eid = one.search(subject="m2025-01", datasets="spikes.times.npy")[0]
-    plot_clearer_stim_example(eid,ext=ext)
+    rez_full_fn = Path(r'distance_results_full.csv')
+    rez_fn = Path(r'distance_results.csv')
+    median_distances_fn = Path(r'median_distances.csv')
+    closest_phi_full_fn = Path(r'closest_phi_full.csv')
+    closest_phi_fn = Path(r'closest_phi.csv')
+    speed_fn = Path(r'speed_by_phase.csv')
+    hold_stim_pca_fn = Path(r'hold_stim_pca.csv')
+    hold_stim_speeds = Path(r'hold_stim_speeds.csv')
+    remove_files()
+
+    for eid in EIDS_NEURAL:
+        # Load and compute projections
+        rec = Rec(one, eid)
+        pop = Population(rec.spikes.times, rec.spikes.clusters, t0=300, tf=600)
+        pop.compute_projection()
+        pop.compute_projection_speed()
+        ndims_to_compute = range(2, 11)
+
+        df_hold_speed = compute_speed_by_phase_holds(rec,pop)
+        df_hold_speed.to_csv(hold_stim_speeds, mode="a", header=not hold_stim_speeds.exists(), index=False)
+
+        # Compute pairwise median distance between Hold, HB, and control stims
+        D,pos = compute_hb_comparisons(rec, pop, ndims_to_compute)
+        D.to_csv(median_distances_fn, mode="a", header=not median_distances_fn.exists(), index=False)
+        pos.to_csv(hold_stim_pca_fn, mode="a", header=not closest_phi_full_fn.exists(), index=False)
+
+        intervals = get_intervals(rec)
+    
+
+        # Compute dispersion, distance to attractor, and closest phase
+        conditions = ["50ms", "hb", "random"]
+        post_times = np.arange(0, 0.1, 0.005)
+        rez = pd.DataFrame()
+        closest_phi_DF = pd.DataFrame()
+        for condition,ndims,post_time in product(conditions, ndims_to_compute, post_times):
+            if condition=='hb':
+                post_time += 1
+            # Dispersion
+            post_stim, D = compute_post_stim_dispersion(
+                rec,
+                pop,
+                intervals[condition],
+                post_time=post_time,
+                ndims=ndims,
+                mode="trace",
+            )
+
+            # Distance to attractor
+            D_attractor = compute_distance_to_attractor(
+                rec, pop, post_stim, ndims=ndims, t0=500, tf=600
+            )
+            # Put the dispersion and distance to attractor in a dataframe
+            _rez = pd.DataFrame()
+            _rez["dispersion"] = [D]
+            _rez["condition"] = condition
+            _rez["exp_distance"] = [D_attractor]
+            _rez["genotype"] = rec.genotype
+            _rez["ndims"] = ndims
+            _rez["post_time"] = post_time
+            _rez["eid"] = rec.eid
+            _rez["subject"] = rec.subject
+            rez = pd.concat([rez, _rez])
+
+            # Closest phase
+            closest_phi, D_to_manifold = compute_nearest_phase(
+                rec, pop, post_stim[:, :ndims], ndims=ndims
+            )
+            # Put the closest phi points for all stims in a dataframe
+            _closest_phi_DF = pd.DataFrame()
+            _closest_phi_DF["closest_phi"] = closest_phi
+            _closest_phi_DF["genotype"] = rec.genotype
+            _closest_phi_DF["ndims"] = ndims
+            _closest_phi_DF["post_time"] = post_time
+            _closest_phi_DF["eid"] = rec.eid
+            _closest_phi_DF["subject"] = rec.subject
+            _closest_phi_DF["condition"] = condition
+            closest_phi_DF = pd.concat([closest_phi_DF, _closest_phi_DF])
+
+
+        rez.to_csv(rez_full_fn, mode="a", header=not rez_full_fn.exists(), index=False)
+        closest_phi_DF.to_csv(
+            closest_phi_full_fn, mode="a", header=not closest_phi_full_fn.exists(), index=False
+        )
+        speed = get_speed_by_phase(rec, pop)
+        speed.to_csv(speed_fn, mode="a", header=not speed_fn.exists())
+
+        # Garbage collection
+        del rec,pop,speed,closest_phi_DF,rez
+        gc.collect()
+
+    rez_full = pd.read_csv(rez_full_fn)
+    rez = rez_full.query("post_time == 0.025")
+    rez.reset_index(drop=True, inplace=True)
+    rez.to_csv("distance_results.csv", index=False)
+
+    closest_phi_full = pd.read_csv(closest_phi_full_fn)
+    closest_phi = closest_phi_full.query("post_time == 0.025")
+    closest_phi.reset_index(drop=True, inplace=True)
+    closest_phi.to_csv("closest_phi.csv", index=False)
+
+    exts = ['pdf'] #  ['pdf','png']
+    for ext in exts:
+        eid = one.search(subject="m2024-40", datasets="spikes.times.npy")[0]
+        plot_clearer_stim_example(eid,ext=ext)
+
+        eid = one.search(subject="m2024-34", datasets="spikes.times.npy")[0]
+        plot_clearer_stim_example(eid,ext=ext)
+
+        eid = one.search(subject="m2024-30", datasets="spikes.times.npy")[0]
+        plot_clearer_stim_example(eid,ext=ext)
+
+        eid = one.search(subject="m2025-01", datasets="spikes.times.npy")[0]
+        plot_clearer_stim_example(eid,ext=ext)

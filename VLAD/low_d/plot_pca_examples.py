@@ -18,6 +18,7 @@ from utils import (
     GENOTYPE_LABELS,
     set_style,
 )
+from compute_pca_perturbations import compute_expiratory_attractor
 from cibrrig.analysis.population import Population
 from cibrrig.plot import replace_timeaxis_with_scalebar, trim_yscale_to_lims
 from scipy.signal import coherence
@@ -25,6 +26,14 @@ import seaborn as sns
 from matplotlib.collections import LineCollection
 from cycler import cycler
 from pathlib import Path
+
+ATTRACTOR_PLOT_KWARGS = {
+    'marker': 'o',
+    'color': 'w',
+    'markersize': 8,
+    'markeredgewidth': 1.5,
+    'markeredgecolor': 'k'
+}
 
 set_style()
 
@@ -83,6 +92,9 @@ class Rec(Rec):
             )
             ax[ii].set_title(PHASE_LABELS[phase])
             ax[ii].legend().set_visible(False)
+        attractor = compute_expiratory_attractor(self, self.pop, ndims=2, t0=500, tf=520)
+        for ii in range(2):
+            ax[ii].plot(attractor[0], attractor[1], **ATTRACTOR_PLOT_KWARGS)
         plt.suptitle(
             GENOTYPE_LABELS[self.genotype],
             color=GENOTYPE_COLORS[self.genotype],
@@ -131,6 +143,8 @@ class Rec(Rec):
             mutation_scale=5,
         )
         ax.legend().set_visible(False)
+        attractor = compute_expiratory_attractor(self, self.pop, ndims=2, t0=500, tf=520)
+        ax.plot(attractor[0], attractor[1], **ATTRACTOR_PLOT_KWARGS)
         plt.title(
             GENOTYPE_LABELS[self.genotype],
             color=GENOTYPE_COLORS[self.genotype],
@@ -179,6 +193,8 @@ class Rec(Rec):
             mutation_scale=5,
         )
         ax.legend().set_visible(False)
+        attractor = compute_expiratory_attractor(self, self.pop, ndims=2, t0=500, tf=520)
+        ax.plot(attractor[0], attractor[1], **ATTRACTOR_PLOT_KWARGS)
 
     def plot_stim_projection_time(self, figsize=(2.5, 1.25),stim='hb',ndims=3):
         pop = self.pop
@@ -288,6 +304,8 @@ def main(ext):
         "m2025-01": 0,
         "m2024-30": 0,
         "m2024-34": 1,
+        "m2024-40": 2,
+
     }
     for subject, sequence in use_data.items():
         eid = one.search(subject=subject, datasets="spikes.times.npy", number=sequence)[0]
