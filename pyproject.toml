@@ -1,0 +1,12 @@
+[project]
+name = "vlad"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy==1.26.4",
+    "pandas<3.0",
+]
+[tool.uv.extra-build-dependencies]
+file = ["numpy"]
