@@ -639,6 +639,10 @@ def plot_scatter_control_vs_hb(mean_frs, fs=(5, 3), ext="pdf"):
     double_line = lambda x: x * 2
     x = np.logspace(-2, 4, 100)
 
+    # Make the tonic units a little darker
+    phase_map = PHASE_MAP.copy()
+    phase_map["tonic"] = plt.rcParams["text.color"]
+
     p = (
         so.Plot(mean_frs, x="control", y="hb", color="category")
         .facet(col="category", order=["insp", "exp", "tonic"])
@@ -646,7 +650,7 @@ def plot_scatter_control_vs_hb(mean_frs, fs=(5, 3), ext="pdf"):
         .scale(
             x=so.Continuous(trans="symlog"),
             y=so.Continuous(trans="symlog"),
-            color=PHASE_MAP,
+            color=phase_map,
         )
         .layout(size=fs, engine="constrained")
     ).plot()
@@ -655,10 +659,26 @@ def plot_scatter_control_vs_hb(mean_frs, fs=(5, 3), ext="pdf"):
         ax.plot(x, double_line(x), color="gray", linestyle="--")
         ax.plot(x, half_line(x), color="gray", linestyle="--")
 
+        category = ax.get_title()
+        
+        # Plot median
+        mask = mean_frs['category'] == category
+        x_data = mean_frs.loc[mask, 'control']
+        y_data = mean_frs.loc[mask, 'hb']
+        
+        x_median = x_data.median()
+        y_median = y_data.median()
+        
+        # Plot centroid point
+        centroid_color = phase_map[category]
+        edge_color = 'white' if centroid_color == plt.rcParams["text.color"] else 'black'
+        ax.plot(x_median, y_median, 'o', markersize=7, markerfacecolor=centroid_color, 
+               markeredgecolor=edge_color, markeredgewidth=0.5, zorder=10)
+
         ax.set_aspect("equal")
         ax.set_xlim(1e-2, 2e2)
         ax.set_ylim(1e-2, 2e2)
-        ax.set_title(UNIT_TYPES[ax.get_title()])
+        ax.set_title(UNIT_TYPES[category])
         ax.set_ylabel("")
         ax.set_xlabel("")
         if ii == 0:
@@ -1618,8 +1638,8 @@ def plot_phase_fr_ratio(all_unit_peth, fs=(2.5, 2), ext="pdf"):
     inset_ax.plot(hb_IE_ratio, label="HB", color=CONDITION_COLORS["hb"])
     inset_ax.plot(control_IE_ratio, label="Control", color=CONDITION_COLORS["control"])
     inset_ax.axvline(0, color="k", ls="--")
-    inset_ax.set_xlim(-0.1, 0.0)
-    inset_ax.set_ylim(0.25, 0.75)
+    inset_ax.set_xlim(-0.1, 0.025)
+    inset_ax.set_ylim(0.25, 1.5)
     axs[1].indicate_inset_zoom(inset_ax, edgecolor="black")
 
     # Align y-labels

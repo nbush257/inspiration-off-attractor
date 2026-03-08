@@ -936,7 +936,7 @@ def plot_hb_vs_hold_scatter(mean_frs, ext=EXT):
     phase_map["tonic"] = plt.rcParams["text.color"]
     p = (
         so.Plot(mean_frs, "hb", "hold", color="category")
-        .facet(col="category", row="genotype",order  = {"row": GENOTYPE_ORDER, "col": PHASE_ORDER})
+        .facet(col="category", row="genotype",order  = {"row": ['vgatai32','vgatcre_ntschrmine','vglut2ai32'], "col": PHASE_ORDER})
         .add(so.Dot(pointsize=ps, edgewidth=0, alpha=0.7), legend=False)
         .limit(x=[0, 151], y=[0, 151])
         .scale(
