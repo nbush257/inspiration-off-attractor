@@ -7,6 +7,15 @@ requires-python = ">=3.12"
 dependencies = [
     "numpy==1.26.4",
     "pandas<3.0",
+    "matplotlib",
+    "seaborn",
+    "pingouin",
+    "scipy",
+    "cibrrig @ git+https://github.com/nbush257/cibrrig.git",
+    "one-api",
+    "cycler",
+    "cython",
+    "ssm @ git+https://github.com/lindermanlab/ssm.git",
 ]
 [tool.uv.extra-build-dependencies]
 file = ["numpy"]
