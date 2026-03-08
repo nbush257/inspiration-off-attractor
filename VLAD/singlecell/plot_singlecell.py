@@ -467,7 +467,7 @@ def plot_phase_curves(df, save_fn, col_width=1, height=3):
     p.save(save_fn)
 
 
-def plot_example_spiketrains(rec, n_per_phase=10, pre_time=3, post_time=5, stimulus='hold',ext=EXT,save_tgl=True,fs=(3,2),ax=None):
+def plot_example_spiketrains(rec, n_per_phase=10, pre_time=3, post_time=5, stimulus='hold',ext=EXT,save_tgl=True,fs=(3,2),ax=None,linewidths=0.25):
     """Plot example spike trains for the top n_per_phase units in each phase
 
     Args:
@@ -511,7 +511,7 @@ def plot_example_spiketrains(rec, n_per_phase=10, pre_time=3, post_time=5, stimu
     if ax is None:
         f = plt.figure(figsize=fs)
         ax = f.add_subplot(111)
-    ax.eventplot(raster, linelengths=1, lineoffsets=1.1, colors=colors, linewidths=0.25)
+    ax.eventplot(raster, linelengths=1, lineoffsets=1.1, colors=colors, linewidths=linewidths)
     for stim in stims:
         if stimulus == "hb":
             cc = HB_MAP[5]
@@ -1225,12 +1225,15 @@ def main(compute, all_peth, ext):
     # Plot scatter of hold vs HB firing rate
     plot_hb_vs_hold_scatter(mean_frs, ext=ext)
 
-    # Plot example trains for long holds:
+    #Plot example trains for long holds:
     subjects = [("m2024-40", 2), ("m2024-34", 0), ("m2024-28", 0)]
     for subject, number in subjects:
         eid = one.search(subject=subject, number=number)[0]
         rec = Rec(one, eid)
         plot_example_spiketrains(rec, n_per_phase=15)
+
+        # Plot zoomed in rasters
+        plot_example_spiketrains(rec, n_per_phase=15, pre_time=1,post_time=1.5,ext='_zoom.pdf',fs=(4,4),linewidths=1)
 
     if all_peth:
         plot_all_peth()
