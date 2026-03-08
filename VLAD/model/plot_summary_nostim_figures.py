@@ -121,7 +121,7 @@ def plot_summary_phasic_one_stim_amp(df,fs=(3,2)):
                 statistic, p_value = scipy.stats.wilcoxon(_df[var].values)
                 sig_star = sig2star(p_value)
                 wilcoxon = pd.DataFrame({'statistic':statistic,
-                                        'p-val':p_value,
+                                        'p_val':p_value,
                                         'sig_star':sig_star,
                                         'phase':phase,
                                         'var':var,
@@ -187,10 +187,10 @@ def plot_rebound_latency(df,fs=(2,1.5)):
     # Stats
     df_use['stim'] = df_use['stim'].replace(map_stim_to_genotype)
     friedman = pg.friedman(df, dv='latency', within='stim',subject='eid')
-    friedman['sig_star'] = friedman['p-unc'].apply(sig2star)
+    friedman['sig_star'] = friedman['p_unc'].apply(sig2star)
 
     holm = pg.pairwise_tests(df_use, dv='latency', between='stim', padjust='holm')
-    holm['sig_star'] = holm['p-corr'].apply(sig2star)
+    holm['sig_star'] = holm['p_corr'].apply(sig2star)
 
     return(p,friedman,holm)
 
@@ -220,7 +220,7 @@ def plot_rising_vs_falling_insp_stims(df,fs=(2,1.5)):
         statistic, p_value = scipy.stats.wilcoxon(_df['delta_rr'].values)
         sig_star = sig2star(p_value)
         wilcoxon = pd.DataFrame({'statistic':statistic,
-                                'p-val':p_value,
+                                'p_val':p_value,
                                 'sig_star':sig_star,
                                 'direction':direction,
                                 'n':len(_df)},index=[0])

@@ -72,15 +72,15 @@ def rebound_analyses(dv, label, fs=(2.0, 1.5), ext=EXT):
     p.save(f"{dv}_from_hold_off_to_breath{ext}")
 
     kruskal = pg.kruskal(df.reset_index(), dv=dv, between="genotype", detailed=True)
-    kruskal["significant"] = kruskal["p-unc"] < 0.05
-    kruskal["sigstars"] = kruskal["p-unc"].apply(sig2star)
+    kruskal["significant"] = kruskal["p_unc"] < 0.05
+    kruskal["sigstars"] = kruskal["p_unc"].apply(sig2star)
     kruskal.to_csv(f"{dv}_kruskal.csv", index=False)
 
     pairwise = pg.pairwise_tests(
         df.reset_index(), dv=dv, between="genotype", padjust="holm", parametric=False
     )
-    pairwise["significant"] = pairwise["p-corr"] < 0.05
-    pairwise["sigstars"] = pairwise["p-corr"].apply(sig2star)
+    pairwise["significant"] = pairwise["p_corr"] < 0.05
+    pairwise["sigstars"] = pairwise["p_corr"].apply(sig2star)
     pairwise.to_csv(f"{dv}_pairwise.csv", index=False)
 
 
@@ -177,7 +177,7 @@ def plot_reset_curve_intercept(reset_curve_intercept, ps=PS, ext=EXT, fs=(1.5, 1
             rez["metric"] = comp
             rez["n"] = _df.shape[0]
             stat_rez = pd.concat([stat_rez, rez])
-    stat_rez["reject_null"] = stat_rez["p-val"] < 0.05
+    stat_rez["reject_null"] = stat_rez["p_val"] < 0.05
     stat_rez.to_csv("reset_curve_intercept_stats.csv", index=False)
 
 
@@ -493,7 +493,7 @@ def plot_heart_rate_opto_stims(hr_normed):
         rez["genotype"] = gg
         rez["metric"] = "delta_hr_bpm"
         stat_rez = pd.concat([stat_rez, rez])
-    stat_rez["reject_null"] = stat_rez["p-val"] < 0.05
+    stat_rez["reject_null"] = stat_rez["p_val"] < 0.05
     stat_rez.to_csv("heart_rate_stats.csv", index=False)
 
 

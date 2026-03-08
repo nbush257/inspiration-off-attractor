@@ -1443,8 +1443,8 @@ def plot_stim_aligned_speed_summary(all_pca_speed_stim_aligned, fs=(2.5, 1.75), 
     
     anova = pg.anova(data=df, dv='delta_speed', between='stimulus_type')
     pairwise = pg.pairwise_tukey(data=df, dv='delta_speed', between='stimulus_type')
-    anova['sigstar'] = sig2star(anova['p-unc'].values)
-    pairwise['sigstar'] = [sig2star(x) for x in pairwise['p-tukey'].values]
+    anova['sigstar'] = sig2star(anova['p_unc'].values)
+    pairwise['sigstar'] = [sig2star(x) for x in pairwise['p_tukey'].values]
     pairwise.to_csv("stim_aligned_speed_summary_pairwise.csv")
     anova.to_csv("stim_aligned_speed_summary_anova.csv")
 
@@ -1482,7 +1482,7 @@ def plot_stim_aligned_speed_summary_hb(all_pca_speed_stim_aligned, sessions_to_i
     x = df.query("condition == 'control'")["speed"]
     y = df.query("condition == 'hb'")["speed"]
     paired_ttest = pg.ttest(x,y,paired=True)
-    paired_ttest['reject_null'] = paired_ttest['p-val'] < 0.05
+    paired_ttest['reject_null'] = paired_ttest['p_val'] < 0.05
     paired_ttest.to_csv("stim_aligned_speed_summary_stats_hb_only.csv")
 
 
@@ -1706,7 +1706,7 @@ def plot_distance_metrics_hb(fs=(1.5,2)):
         p.save(f"HB_distance_metrics_{depvar}.pdf")
         
         anova = pg.mixed_anova(data=df,dv=depvar,between='genotype',within='condition',subject='eid')
-        anova['sigstar'] = [sig2star(x) for x in anova['p-unc'].values]
+        anova['sigstar'] = [sig2star(x) for x in anova['p_unc'].values]
         anova['dv'] = depvar
         anova.to_csv(f"HB_distance_metrics_{depvar}_anova.csv")
 
