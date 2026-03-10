@@ -1053,7 +1053,7 @@ class Rec(Rec):
         f.supylabel(r"$\int{Dia.}$ Predicted", fontsize="small")
         return f
 
-    def compute_reset_curve_sweep(self, amps=None, stim_durs=None, nreps=200):
+    def compute_reset_curve_sweep(self, amps=None, stim_durs=None, nreps=200,applied=None):
         if amps is None:
             amps = [0, 2, 10, 20]
         if stim_durs is None:
@@ -1061,7 +1061,7 @@ class Rec(Rec):
         df = pd.DataFrame()
         for amp, stim_dur in product(amps, stim_durs):
             x_stim, y_stim, _, _ = self.sim_reset_curve(
-                stim_dur=stim_dur, nreps=nreps, plot_tgl=False, stim_amplitude=amp
+                stim_dur=stim_dur, nreps=nreps, plot_tgl=False, stim_amplitude=amp,applied=applied
             )
             _df = pd.DataFrame()
             _df["y_stim"] = y_stim
