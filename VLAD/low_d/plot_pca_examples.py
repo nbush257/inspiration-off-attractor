@@ -26,7 +26,8 @@ import seaborn as sns
 from matplotlib.collections import LineCollection
 from cycler import cycler
 from pathlib import Path
-
+import cibrrig.plot as cbp
+from  compute_pca_perturbations import compute_post_stim_dispersion
 ATTRACTOR_PLOT_KWARGS = {
     'marker': 'o',
     'color': 'w',
@@ -42,7 +43,6 @@ PHASE_LABELS = {
     "exp": "Expiration triggered",
 }
 EXAMPLE_FIGS = Path('example_figs')
-
 
 class Rec(Rec):
     def __init__(self, one, eid, load_raw_dia=False):
@@ -296,7 +296,122 @@ class Rec(Rec):
         C = np.array(C)
         return np.argsort(C)[::-1]
 
+    def plot_clearer_stim_example(self, figsize=(2.5,2.5),lw=1,ms=2,ext="png",dpi=600):
+        """ 
+        Makes a step by step plot of the stimulation effect on LowD space
+        """
+        pop = self.pop
+        phi2 = self.phi2
+        pulse_dur = 0.05
+        intervals, _ = self.get_pulse_stims(pulse_dur)
+        dims = [0, 1]
+        post_time = 0.025
+        t0,tf = 570,600
+        fn = f"example_stim_{self.prefix}"
+        fn = EXAMPLE_FIGS.joinpath(fn)
+        f = plt.figure(figsize=figsize)
+        ax = f.add_subplot()
+        pop.plot_projection_line(
+            dims=dims,
+            t0=t0,
+            tf=tf,
+            cvar=phi2,
+            cmap="RdBu_r",
+            colorbar_title=r"$\phi$ (rads.)",
+            alpha=0.5,
+            ax=ax,
+        )
+        ax.autoscale()
+        ax.set_aspect("equal")
+        # Modify colorbar ticks
+        f.get_children()[2].set_xticks([-np.pi, 0, np.pi])
+        f.get_children()[2].set_xticklabels([r"$-\pi$", "0", r"$\pi$"])
+        plt.savefig(f"{fn}_a.{ext}",dpi=dpi)
 
+        cbp.plot_projection_line_multicondition(
+            pop.projection,
+            pop.tbins,
+            intervals,
+            colors=[self.laser_color for _ in range(intervals.shape[0])],
+            ax=ax,
+            dims=dims,
+            lw=lw,
+            use_arrow=True,
+            multi_arrow=True,
+            mutation_scale=5
+        )
+        plt.savefig(f"{fn}_b.{ext}",dpi=dpi)
+        intervals_post = np.vstack([intervals[:, 1], intervals[:, 1] + post_time]).T
+        cbp.plot_projection_line_multicondition(
+            pop.projection,
+            pop.tbins,
+            intervals_post,
+            colors=["k" for _ in range(intervals_post.shape[0])],
+            ax=ax,
+            dims=dims,
+            lw=lw,
+        )
+
+        plt.savefig(f"{fn}_c.{ext}",dpi=dpi)
+        post_stim, D = compute_post_stim_dispersion(self, pop, intervals, post_time, ndims=2)
+        ax.plot(post_stim[:, 0], post_stim[:, 1], "o", mec="k", mew=lw/2,ms=ms, mfc="silver")
+        attractor = compute_expiratory_attractor(self, self.pop, ndims=2, t0=t0, tf=tf)
+        ax.plot(attractor[0], attractor[1], **ATTRACTOR_PLOT_KWARGS)
+        plt.savefig(f"{fn}_d.{ext}",dpi=dpi)
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+        plt.close("all")
+
+        f = plt.figure(figsize=figsize)
+        ax = f.add_subplot(111)
+        pop.plot_projection(
+            dims=dims,
+            t0=t0,
+            tf=tf,
+            cvar=phi2,
+            cmap="RdBu_r",
+            colorbar_title=r"$\phi$ (rads.)",
+            alpha=0.5,
+            ax=ax,
+            s=0,
+        )
+        ax.autoscale()
+        ax.set_aspect("equal")
+        n = post_stim.shape[0]
+        for ii in range(n):
+            for jj in range(ii + 1, n):
+                ax.plot(
+                    [post_stim[ii, 0], post_stim[jj, 0]],
+                    [post_stim[ii, 1], post_stim[jj, 1]],
+                    "k-",
+                    lw=0.25,
+                    alpha=0.1,
+                )
+        f.get_children()[2].set_xticks([-np.pi, 0, np.pi])
+        f.get_children()[2].set_xticklabels([r"$-\pi$", "0", r"$\pi$"])
+        ax.plot(post_stim[:, 0], post_stim[:, 1], "o", mec="k", mew=lw, ms=ms, mfc="silver")
+        ax.plot(attractor[0], attractor[1], **ATTRACTOR_PLOT_KWARGS)
+        plt.savefig(f"{fn}_e.{ext}",dpi=dpi)
+
+        # Speed
+        f = plt.figure(figsize=figsize)
+        ax = f.add_subplot(111)
+        pop.compute_projection_speed()
+        pop.plot_projection_line(
+            dims=dims,
+            t0=t0,
+            tf=tf,
+            cvar=pop.projection_speed,
+            cmap="viridis",
+            colorbar_title="Speed (a.u.)",
+            alpha=0.5,
+            ax=ax,
+        )
+        ax.autoscale()
+        ax.set_aspect("equal")
+        clims = f.get_children()[2].get_xticks()
+        f.get_children()[2].set_xticklabels([f"{clim:.2f}" for clim in clims])
+        plt.savefig(f"{fn}_f.{ext}",dpi=dpi)
 @click.command()
 @click.option("--ext", default="pdf", help="File extension")
 def main(ext):
@@ -325,6 +440,8 @@ def main(ext):
         plt.savefig(fn)
         plt.close("all")
 
+        rec.plot_clearer_stim_example(ext=ext)
+
         for stim in ['hb','hold']:
             rec.plot_stim_projection_time(stim=stim)
             fn = EXAMPLE_FIGS.joinpath(f'{subject}_g{sequence}_{stim}_time_stims.{ext}')
@@ -332,6 +449,8 @@ def main(ext):
             plt.close("all")
 
         del rec
+        
+        
 
 
 if __name__ == "__main__":
