@@ -10,6 +10,13 @@ from utils import GENOTYPE_COLORS,GENOTYPE_LABELS,set_style
 GENOTYPE_ORDER = ['vglut2ai32','vgatai32','vgatcre_ntschrmine']
 set_style()
 
+# These EIDs have rotational dynamics in expiration which 
+# is not relevant for alignemtn of the stimulus with the 
+# dynamics
+EIDS_TO_RM = ['36973c93-e12c-33b9-a96b-93160795904b',
+              '1e3a3cd7-e1f1-3b60-92f2-53d48fc2e9be',
+              '38b7c903-4d90-38c3-9662-1e1083e4b604']
+
 class Dynamics:
     def __init__(self, d):
         self.As = d["As"]
@@ -139,6 +146,7 @@ df['self'] = df.eval('eid_stimulus == eid_dynamics')
 df['self_genotype'] = df.eval('genotype_stimulus == genotype_dynamics')
 PS = 3
 
+# This is not needed
 df_use = df.query('self').copy()
 p = (
     so.Plot(df_use, x='dynamics_speed', y='dot_product', color='genotype_stimulus')
@@ -152,25 +160,29 @@ p = (
 p
 p.save('all_dot_products.pdf')
 
-for speed in ['slow','fast']:
-    df_use = df.query('phase_stimulus == "insp" & dynamics_speed == @speed')
-    df_use['self'] = df_use['self'].map({True:'Within',False:'Shuffle'})
-    p = (
-        so.Plot(df_use, y='self', x='dot_product', color='genotype_dynamics')
-        .facet(row='genotype_dynamics',order=GENOTYPE_ORDER)
-        .add(so.Range(alpha=0.5),so.Est(),legend=False)
-        .add(so.Dash(width=0.25),so.Agg(),legend=False)
-        .add(so.Dot(edgecolor='k'),so.Jitter(),so.Shift(y=-0.25),group='eid_dynamics',legend=False,alpha='self',pointsize='self')
-        .label(x=f'$v_{{exp}}^{speed} \cdot v_{{insp}}^{{stim}}$',y='',color='Genotype')
-        .scale(color=GENOTYPE_COLORS,alpha={'Within':1,'Shuffle':0.5},pointsize={'Within':PS,'Shuffle':PS/2})
-        .layout(size=(2,2.5))
-    ).plot()
-    axs = p._figure.axes
-    for ax in axs:
-        ax.axvline(0, color='k', linestyle='--', lw=0.5)
-        tt = ax.get_title()
-        ax.set_title(GENOTYPE_LABELS[tt],fontsize='xx-small',color=GENOTYPE_COLORS[tt])
-    p.save(f'{speed}_dynamics_dot_product.pdf')
+
+# Plot slow dynamics dot products (omit all recordings with rotating expiratory dynamics)
+speed = 'slow'
+df_use = df.query('phase_stimulus == "insp" & dynamics_speed == @speed')
+df_use = df_use.query('eid_stimulus not in @EIDS_TO_RM')
+df_use['self'] = df_use['self'].map({True:'Within',False:'Shuffle'})
+p = (
+    so.Plot(df_use, y='self', x='dot_product', color='genotype_dynamics')
+    .facet(row='genotype_dynamics',order=GENOTYPE_ORDER)
+    .add(so.Range(alpha=0.5),so.Est(),legend=False)
+    .add(so.Dash(width=0.25),so.Agg(),legend=False)
+    .add(so.Dot(edgecolor='k'),so.Jitter(),so.Shift(y=-0.25),group='eid_dynamics',legend=False,alpha='self',pointsize='self')
+    .label(x=f'$v_{{exp}}^{{{speed}}} \cdot v_{{insp}}^{{stim}}$',y='',color='Genotype')
+    .scale(color=GENOTYPE_COLORS,alpha={'Within':1,'Shuffle':0.5},pointsize={'Within':PS,'Shuffle':PS/2})
+    .layout(size=(2,2.5))
+).plot()
+axs = p._figure.axes
+for ax in axs:
+    ax.axvline(0, color='k', linestyle='--', lw=0.5)
+    tt = ax.get_title()
+    ax.set_title(GENOTYPE_LABELS[tt],fontsize='xx-small',color=GENOTYPE_COLORS[tt])
+p
+p.save(f'{speed}_dynamics_dot_product.pdf')
     
 
 
@@ -198,4 +210,5 @@ for ax in axs:
     ax.axvline(0, color='k', linestyle='--', lw=0.5)
     tt = ax.get_title()
     ax.set_title(GENOTYPE_LABELS[tt],fontsize='xx-small',color=GENOTYPE_COLORS[tt])
+p
 p.save('stimulus_strength_by_phase.pdf')
