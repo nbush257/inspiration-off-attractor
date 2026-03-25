@@ -129,7 +129,7 @@ def plot_summary_phasic_one_stim_amp(df,fs=(3,2)):
                                         'stim':stim_label},index=[0])
                 stats = pd.concat([stats,wilcoxon])
             
-    return(p_rr,p_amp,stats)
+    return(p_rr,p_amp,stats,df_use)
 
 def plot_reset_curves(df,fs=(2.5,2)):
 
@@ -235,13 +235,15 @@ def main():
     df = get_amplitude_data()
     p1 = plot_summary_amplitude_sweeps(df)
     p1.save('amplitude_sweeps.pdf')
+    df.to_csv('reset_curves_sim_stims.csv')
 
     # Phasic stimulus
     df = get_phasic_data()
-    p2,p3,stats = plot_summary_phasic_one_stim_amp(df)
+    p2,p3,stats,df_use = plot_summary_phasic_one_stim_amp(df)
     p2.save('phasic_resp_rate.pdf')
     p3.save('phasic_amplitude.pdf')
     stats.to_csv('phasic_sim_stats.csv')
+    df_use.to_csv('phasic_sim_stims.csv')
     
     # Rising vs Falling
     p6,stats = plot_rising_vs_falling_insp_stims(df)
